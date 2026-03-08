@@ -508,6 +508,11 @@ with output_col:
                 for term_data in st.session_state['enforced_terms']:
                     st.markdown(f"**{term_data['term']}** ➔ `{term_data['enforced_translation']}`")
         
+        # Display Detected Language if Auto-Detect was used
+        if st.session_state.get('detected_lang'):
+            det = st.session_state['detected_lang']
+            st.info(f"🔍 **Detected Language:** {det.get('lang_name')} ({round(det.get('confidence', 0)*100, 1)}% confidence)")
+        
         # Audio playback for translated text
         if st.session_state.get('tts_audio_path') and os.path.exists(st.session_state['tts_audio_path']):
             st.markdown("<br>", unsafe_allow_html=True)
@@ -590,8 +595,16 @@ if translate_clicked:
                     st.session_state['translation_confidence'] = 90.0 # Placeholder for docs
                     st.session_state['enforced_terms'] = []
                     st.session_state['tts_audio_path'] = None
-                else:
+                if not current_doc:
                     st.session_state['translated_doc_path'] = None
+                    
+                    # Prevent translating same language to same language
+                    # This happens if Auto-Detect misidentifies the source as the target
+                    source_nllb = engine.get_nllb_code(resolved_source)
+                    target_nllb = engine.get_nllb_code(target_lang)
+                    
+                    if source_nllb == target_nllb and not current_doc:
+                         st.warning(f"⚠️ Source and target languages appear to be the same ({resolved_source}). Try selecting the source language manually.")
                     
                     # Intercept Healthcare Glossary Terms
                     enforced_terms = []

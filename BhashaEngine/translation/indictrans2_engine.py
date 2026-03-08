@@ -297,11 +297,22 @@ class NLLB200TranslationEngine:
         # Fast API Fallback
         try:
             from deep_translator import GoogleTranslator
-            iso_src = next((k for k, v in ISO_TO_NLLB.items() if v == src_code), 'en')
-            iso_tgt = next((k for k, v in ISO_TO_NLLB.items() if v == tgt_code), 'hi')
+            # Map NLLB codes back to ISO codes for GoogleTranslator
+            iso_src = next((k for k, v in ISO_TO_NLLB.items() if v == src_code), 'auto')
+            iso_tgt = next((k for k, v in ISO_TO_NLLB.items() if v == tgt_code), 'en')
             
-            if iso_src == src_code: iso_src = 'auto'
-            if iso_tgt == tgt_code: iso_tgt = 'en'
+            # Additional safety for common Indian languages if the reverse lookup fails
+            if not iso_src or iso_src == 'auto':
+                if 'hin_' in src_code: iso_src = 'hi'
+                elif 'mar_' in src_code: iso_src = 'mr'
+                elif 'tam_' in src_code: iso_src = 'ta'
+                elif 'tel_' in src_code: iso_src = 'te'
+                elif 'ben_' in src_code: iso_src = 'bn'
+                else: iso_src = 'auto'
+            
+            if iso_tgt == 'en' and 'eng_' not in tgt_code:
+                if 'hin_' in tgt_code: iso_tgt = 'hi'
+                elif 'mar_' in tgt_code: iso_tgt = 'mr'
             
             translator = GoogleTranslator(source=iso_src, target=iso_tgt)
             result = translator.translate(text)
@@ -309,6 +320,7 @@ class NLLB200TranslationEngine:
             if result is None: result = text
             return {"text": result, "confidence": 92.0}
         except Exception as e:
+            print(f"API Translation error: {e}")
             return {"text": text, "confidence": 0.0}
         
     def translate_batch(self, texts: list, source_lang: str, target_lang: str, mode="Fast", precision="Standard") -> list:
