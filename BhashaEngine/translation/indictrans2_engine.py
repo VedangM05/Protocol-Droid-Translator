@@ -4,6 +4,7 @@
 
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import torch
+import re
 
 # FLORES-200 language codes for NLLB-200
 LANG_CODE_MAP = {
