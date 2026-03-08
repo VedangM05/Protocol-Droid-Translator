@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+dist/
+build/
+.next/
+*.log
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary files
+temp/
+tmp/
+.streamlit/
+*.bak
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
